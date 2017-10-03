@@ -899,6 +899,7 @@ static void *make_block_array(void *mem, int count, int size)
    int i;
    void ** p = (void **) mem;
    char *q = (char *) (p + count);
+   assert(count > 0); // not great, revisit
    for (i=0; i < count; ++i) {
       p[i] = q;
       q += size;
@@ -3828,8 +3829,7 @@ static int start_decoder(vorb *f)
                unsigned int div=1;
                for (k=0; k < c->dimensions; ++k) {
                   int off = (z / div) % c->lookup_values;
-                  float val = mults[off];
-                  val = mults[off]*c->delta_value + c->minimum_value + last;
+                  float val = mults[off]*c->delta_value + c->minimum_value + last;
                   c->multiplicands[j*c->dimensions + k] = val;
                   if (c->sequence_p)
                      last = val;
@@ -4556,7 +4556,7 @@ static uint32 vorbis_find_page(stb_vorbis *f, uint32 *end, uint32 *last)
 
 static int get_seek_page_info(stb_vorbis *f, ProbedPage *z)
 {
-   uint8 header[27], lacing[255];
+   uint8 header[27] = {0}, lacing[255] = {0};
    int i,len;
 
    // record where the page starts
@@ -4616,7 +4616,7 @@ static int seek_to_sample_coarse(stb_vorbis *f, uint32 sample_number)
    ProbedPage left, right, mid;
    int i, start_seg_with_known_loc, end_pos, page_start;
    uint32 delta, stream_length, padding;
-   double offset, bytes_per_sample;
+   double offset = 0.0, bytes_per_sample = 0.0;
    int probe = 0;
 
    // find the last page and validate the target sample
@@ -4897,7 +4897,6 @@ unsigned int stb_vorbis_stream_length_in_samples(stb_vorbis *f)
             // set. whoops!
             break;
          }
-         previous_safe = last_page_loc+1;
          last_page_loc = stb_vorbis_get_file_offset(f);
       }
 
@@ -5215,8 +5214,6 @@ int stb_vorbis_get_samples_short_interleaved(stb_vorbis *f, int channels, short 
    float **outputs;
    int len = num_shorts / channels;
    int n=0;
-   int z = f->channels;
-   if (z > channels) z = channels;
    while (n < len) {
       int k = f->channel_buffer_end - f->channel_buffer_start;
       if (n+k >= len) k = len - n;
@@ -5235,8 +5232,6 @@ int stb_vorbis_get_samples_short(stb_vorbis *f, int channels, short **buffer, in
 {
    float **outputs;
    int n=0;
-   int z = f->channels;
-   if (z > channels) z = channels;
    while (n < len) {
       int k = f->channel_buffer_end - f->channel_buffer_start;
       if (n+k >= len) k = len - n;
