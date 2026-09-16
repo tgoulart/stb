@@ -12,8 +12,10 @@ target_include_directories(stb
 target_sources(stb
   PUBLIC
     include/stb_image.h
+    include/stb_truetype.h
   PRIVATE
     src/stb_image.c
+    src/stb_truetype.c
 )
 
 target_compile_definitions(stb
